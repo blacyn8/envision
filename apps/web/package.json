@@ -1,5 +1,5 @@
 {
-  "name": "@envision/web",
+  "name": "@flixaura/web",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -26,8 +26,8 @@
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.3.0",
     "lucide-react": "^0.379.0",
-    "@envision/shared": "*",
-    "@envision/db": "*"
+    "@flixaura/shared": "*",
+    "@flixaura/db": "*"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
