@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@flixaura/db": ["../db/src/index.ts"],
+      "@flixaura/db/*": ["../db/src/*"],
+      "@flixaura/shared": ["../shared/src/index.ts"],
+      "@flixaura/shared/*": ["../shared/src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}

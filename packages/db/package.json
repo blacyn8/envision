@@ -5,12 +5,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@supabase/supabase-js": "^2.43.1",
-    "@flixaura/shared": "*"
+    "@supabase/supabase-js": "^2.43.1"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
-    "ts-node": "^10.9.2",
     "@types/node": "^20.12.7"
   }
 }
