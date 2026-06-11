@@ -5,6 +5,7 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "esModuleInterop": true,
+    "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {

@@ -1,3 +1,4 @@
+import * as dotenv from 'dotenv'; import * as path from 'path'; dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 import Parser from 'rss-parser';
 import { supabase } from '@flixaura/db';
 

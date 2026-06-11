@@ -1,8 +1,7 @@
-import 'dotenv/config';
 import * as dotenv from 'dotenv';
-import path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../../../../apps/web/.env.local') });
-import 'dotenv/config';
+import * as path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 import { fetchPopularMovies, fetchPopularTV } from './client';
 import { supabase } from '@flixaura/db';
 
