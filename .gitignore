@@ -15,3 +15,4 @@ Thumbs.db
 *.tsbuildinfo
 ios
 android
+packages/content-pipeline/.env
