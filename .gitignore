@@ -16,3 +16,6 @@ Thumbs.db
 ios
 android
 packages/content-pipeline/.env
+
+# YouTube discovery candidates (working data)
+packages/content-pipeline/src/youtube/data/candidates.json

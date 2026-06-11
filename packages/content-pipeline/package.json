@@ -8,6 +8,9 @@
   "scripts": {
     "sync:tmdb": "ts-node src/tmdb/sync.ts",
     "sync:rss": "ts-node src/rss/sync.ts",
+    "sync:youtube": "ts-node src/youtube/seed.ts",
+    "sync:youtube:search": "ts-node src/youtube/search.ts",
+    "sync:youtube:approve": "ts-node src/youtube/approve.ts",
     "scrape": "ts-node src/scrapers/run.ts"
   },
   "dependencies": {
@@ -16,6 +19,7 @@
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "dotenv": "^16.4.7",
+    "googleapis": "^137.0.0",
     "rss-parser": "^3.13.0"
   },
   "devDependencies": {
