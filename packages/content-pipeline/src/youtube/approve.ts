@@ -5,41 +5,52 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 import * as fs from 'fs';
 import { supabase, addYoutubeEmbed } from '@flixaura/db';
 
-async function importApproved() {
-  const filePath = path.resolve(__dirname, 'data/candidates.json');
-  const candidates = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+interface Candidate {
+  videoId: string;
+  title: string;
+  channel: string;
+  description: string;
+  region: string;
+  content_type: string;
+  approved: boolean;
+}
 
-  const approved = candidates.filter((c: any) => c.approved === true);
+async function approveAndImport() {
+  const filePath = path.resolve(__dirname, '../../candidates.json');
+  const candidates: Candidate[] = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-  if (approved.length === 0) {
-    console.log('No approved items found. Edit candidates.json and set "approved": true on items you want.');
-    return;
-  }
+  const approved = candidates.filter(c => c.approved);
+  console.log(`Importing ${approved.length} approved videos...`);
 
-  for (const item of approved) {
+  for (const c of approved) {
     const { data: movie, error } = await supabase
       .from('movies')
       .upsert({
-        title: item.title,
-        overview: item.description?.slice(0, 500) || '',
-        content_type: item.contentType,
-        region: item.region,
+        title: c.title,
+        overview: c.description.slice(0, 500),
+        content_type: c.content_type,
+        region: c.region,
       }, { onConflict: 'title' })
       .select()
       .single();
 
     if (error) {
-      console.error(`Error upserting ${item.title}:`, error.message);
+      console.error(`Failed for "${c.title}":`, error.message);
       continue;
     }
 
     if (movie) {
-      await addYoutubeEmbed(movie.id, item.videoId, true);
-      console.log(`Imported: ${item.title} (${item.channel})`);
+      await addYoutubeEmbed(movie.id, c.videoId, true);
+      console.log(`Imported: ${c.title}`);
     }
   }
-
-  console.log(`Done. Imported ${approved.length} items.`);
 }
-
-importApproved().catch(console.error);
+function decodeHtml(str: string): string {
+  return str
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+approveAndImport().catch(console.error);
