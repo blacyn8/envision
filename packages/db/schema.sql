@@ -54,6 +54,9 @@ create table movies (
   has_subtitle_yo   boolean not null default false,     -- Yoruba
   ai_tags           text[] not null default '{}',       -- LLM-generated tags
   embedding         vector(1536),                       -- for AI similarity search
+  country_origin    varchar(2),                         -- ISO 3166-1 alpha-2, e.g. "KE", "NG"
+  mood_tags         text[] not null default '{}',       -- pipeline-assigned mood tags for filtering
+  source_priority   integer not null default 0,         -- higher = more trusted source wins on conflict
   created_at        timestamptz not null default now(),
   updated_at        timestamptz not null default now()
 );
@@ -68,6 +71,28 @@ create index idx_movies_slug          on movies (slug);
 create index idx_movies_fts           on movies using gin(to_tsvector('english', title || ' ' || coalesce(synopsis, '')));
 -- Vector similarity index (for AI recommendations)
 create index idx_movies_embedding     on movies using ivfflat (embedding vector_cosine_ops);
+
+-- ─── SCRAPER / SYNC RUN LOG ──────────────────────────────────────────────────
+-- Every pipeline job (TMDB sync, scrapers, RSS feeds) logs its progress here.
+
+create table scraper_log (
+  id             uuid primary key default uuid_generate_v4(),
+  source_name    text not null,
+  status         text not null default 'running',
+  started_at     timestamptz not null default now(),
+  finished_at    timestamptz,
+  items_found    integer not null default 0,
+  items_added    integer not null default 0,
+  items_updated  integer not null default 0,
+  items_skipped  integer not null default 0,
+  error_message  text
+);
+
+create index idx_scraper_log_source_name on scraper_log (source_name);
+
+alter table scraper_log enable row level security;
+create policy "Service role can manage scraper_log"
+  on scraper_log for all using (auth.role() = 'service_role');
 
 -- ─── DOWNLOAD LINKS ──────────────────────────────────────────────────────────
 

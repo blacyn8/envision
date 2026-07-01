@@ -241,9 +241,10 @@ export function normaliseTmdbMovie(
 ): Omit<any, 'id' | 'created_at' | 'updated_at' | 'download_links'> {
   const isTV = raw.media_type === 'tv' || !!raw.name
   const title = raw.title ?? raw.name ?? 'Untitled'
-  const year = parseInt(
-    (raw.release_date ?? raw.first_air_date ?? '2000').slice(0, 4)
-  )
+  // release_date/first_air_date can be an empty string (not just null/undefined)
+  // for unreleased or removed titles — fall back to '2000' in that case too.
+  const dateStr = raw.release_date || raw.first_air_date || '2000'
+  const year = parseInt(dateStr.slice(0, 4))
 
   // Determine country of origin — prefer origin_country array, fall back to
   // production_countries. This is what catches Kenyan/Nigerian/SA films.
