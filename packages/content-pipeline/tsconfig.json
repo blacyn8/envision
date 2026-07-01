@@ -1,12 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "module": "CommonJS",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "rootDir": "src",
-    "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "@flixaura/db": ["../db/src/index.ts"],

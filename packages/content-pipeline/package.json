@@ -6,12 +6,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "sync:tmdb": "ts-node src/tmdb/sync.ts",
     "sync:rss": "ts-node src/rss/sync.ts",
     "sync:youtube": "ts-node src/youtube/seed.ts",
     "sync:youtube:search": "ts-node src/youtube/search.ts",
-    "sync:youtube:approve": "ts-node src/youtube/approve.ts",
-    "scrape": "ts-node src/scrapers/run.ts"
+    "sync:youtube:approve": "ts-node src/youtube/approve.ts"
   },
   "dependencies": {
     "@flixaura/db": "*",

@@ -2,7 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Fonts ──────────────────────────────────────────────────────────────────
+   Bricolage Grotesque — display face, used for headings and the logo.
+   Inter — body face, used for everything else.
+   Both loaded via next/font in layout.tsx; these vars are the bridge. */
+:root {
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: #0B0F1A;
-  color: #fff;
+  background: theme('colors.fa.bg');
+  color: theme('colors.fa.text');
+}
+
+/* ─── Shelf horizontal scroll ────────────────────────────────────────────────
+   Thin cyan scrollbar on the horizontal movie rows. */
+.shelf-track {
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.fa.accent') transparent;
+}
+
+.shelf-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.shelf-track::-webkit-scrollbar-thumb {
+  background: rgba(79, 209, 255, 0.35);
+  border-radius: 999px;
+}
+
+.shelf-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.title-card {
+  scroll-snap-align: start;
+}
+
+/* ─── Anime shelf gradient title ─────────────────────────────────────────────
+   The "Anime" shelf heading uses a cyan-to-violet gradient text fill —
+   this is the one signature flourish, used sparingly (one shelf only). */
+.gradient-text {
+  background: linear-gradient(90deg, theme('colors.fa.accent'), theme('colors.fa.accent-2'));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Reduced motion ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }

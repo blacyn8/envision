@@ -17,6 +17,9 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "db:push": {
+      "cache": false
+    },
     "clean": {
       "cache": false
     }

@@ -11,21 +11,32 @@ const QUERIES = [
   'Royal Arts Academy full movie',
 ];
 
+const OUTPUT_PATH = path.resolve(__dirname, 'data/candidates.json');
+
 async function runSearch() {
-  const allResults: any[] = [];
+  // Merge into any existing file rather than overwrite — preserves
+  // previously reviewed "approved" decisions on re-runs.
+  const existing: any[] = fs.existsSync(OUTPUT_PATH)
+    ? JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf-8'))
+    : [];
+  const byVideoId = new Map(existing.map((c) => [c.videoId, c]));
 
   for (const query of QUERIES) {
     console.log(`Searching: ${query}`);
     const results = await searchVideos(query, 10);
-   allResults.push(...results.map((r: any) => ({ ...r, query, region: 'nollywood', content_type: 'movie', approved: false })));
+
+    for (const r of results as any[]) {
+      if (byVideoId.has(r.videoId)) continue; // don't clobber existing review decisions
+      byVideoId.set(r.videoId, { ...r, query, region: 'nollywood', contentType: 'movie', approved: false });
+    }
   }
 
-  fs.writeFileSync(
-    path.resolve(__dirname, '../../candidates.json'),
-    JSON.stringify(allResults, null, 2)
-  );
+  const allResults = [...byVideoId.values()];
 
-  console.log(`Wrote ${allResults.length} candidates to candidates.json`);
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(allResults, null, 2));
+
+  console.log(`Wrote ${allResults.length} candidates to ${OUTPUT_PATH}`);
   console.log('Open candidates.json, review each entry, and set "approved": true for the ones you want.');
 }
 

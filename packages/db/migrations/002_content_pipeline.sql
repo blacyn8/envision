@@ -1,57 +1,133 @@
--- External links (download/stream sources)
-CREATE TABLE external_links (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  movie_id UUID REFERENCES movies(id) ON DELETE CASCADE,
-  source TEXT NOT NULL,
-  quality TEXT,
-  url TEXT NOT NULL,
-  has_subtitles BOOLEAN DEFAULT FALSE,
-  click_count INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now()
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Migration 002 — Content Pipeline (Phase A: link aggregator, Phase B ready)
+-- Run this in Supabase SQL Editor AFTER schema.sql (001) has been applied.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- ─── EXTERNAL LINKS ──────────────────────────────────────────────────────────
+-- Phase A core table. Sits alongside the `download_links` table from Stage 1
+-- but distinguishes stream vs download and tracks link health.
+
+create type link_type as enum ('stream', 'download');
+
+create table external_links (
+  id            uuid primary key default uuid_generate_v4(),
+  movie_id      uuid not null references movies(id) on delete cascade,
+  provider_name text not null,              -- e.g. 'netnaija', 'fzmovies', 'youtube'
+  link_type     link_type not null default 'download',
+  url           text not null,
+  quality       quality_type,
+  is_active     boolean not null default true,
+  last_checked  timestamptz,
+  click_count   integer not null default 0,  -- tracks popularity, useful for ranking & ads
+  created_at    timestamptz not null default now(),
+  unique(movie_id, url)
 );
 
--- RSS sources (Anime/KDrama feeds)
-CREATE TABLE rss_sources (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  url TEXT NOT NULL,
-  category TEXT NOT NULL,
-  active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT now()
+create index idx_external_links_movie_id  on external_links (movie_id);
+create index idx_external_links_active    on external_links (is_active) where is_active = true;
+create index idx_external_links_provider  on external_links (provider_name);
+
+alter table external_links enable row level security;
+create policy "External links are publicly readable"
+  on external_links for select using (is_active = true);
+create policy "Service role can manage external links"
+  on external_links for all using (auth.role() = 'service_role');
+
+-- ─── SCRAPER LOG ─────────────────────────────────────────────────────────────
+-- Tracks every scraper/sync run for debugging and monitoring.
+
+create table scraper_log (
+  id            uuid primary key default uuid_generate_v4(),
+  source_name   text not null,              -- e.g. 'tmdb_sync', 'netnaija_scraper'
+  run_at        timestamptz not null default now(),
+  finished_at   timestamptz,
+  items_found   integer not null default 0,
+  items_added   integer not null default 0,
+  items_updated integer not null default 0,
+  items_failed  integer not null default 0,
+  duration_ms   integer,
+  error_message text,
+  status        text not null default 'running' check (status in ('running', 'success', 'partial', 'failed'))
 );
 
--- Scrape targets (Nollywood/African sites)
-CREATE TABLE scrape_targets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  base_url TEXT NOT NULL,
-  active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT now()
+create index idx_scraper_log_source on scraper_log (source_name, run_at desc);
+
+alter table scraper_log enable row level security;
+create policy "Service role can manage scraper log"
+  on scraper_log for all using (auth.role() = 'service_role');
+
+-- ─── YOUTUBE EMBEDS (Phase B readiness) ──────────────────────────────────────
+-- Lets us attach trailers now and full episodes/films later
+-- once licensing or public-domain content is sourced.
+
+create table youtube_embeds (
+  id                   uuid primary key default uuid_generate_v4(),
+  movie_id             uuid not null references movies(id) on delete cascade,
+  youtube_video_id     text not null,         -- the 11-char YouTube ID
+  is_official_trailer  boolean not null default true,
+  is_full_content      boolean not null default false,  -- true once Phase B full episodes/films are added
+  language             varchar(5) not null default 'en',
+  title                text,                  -- optional override label, e.g. "Episode 1"
+  created_at           timestamptz not null default now(),
+  unique(movie_id, youtube_video_id)
 );
 
--- Scraper run logs
-CREATE TABLE scraper_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  source_id UUID,
-  source_type TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'running',
-  items_found INTEGER DEFAULT 0,
-  items_failed INTEGER DEFAULT 0,
-  started_at TIMESTAMPTZ DEFAULT now(),
-  finished_at TIMESTAMPTZ
+create index idx_youtube_embeds_movie_id on youtube_embeds (movie_id);
+
+alter table youtube_embeds enable row level security;
+create policy "YouTube embeds are publicly readable"
+  on youtube_embeds for select using (true);
+create policy "Service role can manage youtube embeds"
+  on youtube_embeds for all using (auth.role() = 'service_role');
+
+-- ─── RSS SOURCES ─────────────────────────────────────────────────────────────
+-- Configurable list of RSS feeds for Anime/KDrama drops.
+-- Lets us add/disable feeds without redeploying code.
+
+create table rss_sources (
+  id          uuid primary key default uuid_generate_v4(),
+  name        text not null unique,         -- e.g. 'nyaa-anime', 'subsplease-anime'
+  feed_url    text not null,
+  region      region_type not null,
+  is_active   boolean not null default true,
+  last_run_at timestamptz,
+  created_at  timestamptz not null default now()
 );
 
--- YouTube embeds (Phase B legal streaming)
-CREATE TABLE youtube_embeds (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  movie_id UUID REFERENCES movies(id) ON DELETE CASCADE,
-  youtube_video_id TEXT NOT NULL,
-  is_full_content BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT now()
+alter table rss_sources enable row level security;
+create policy "Service role can manage rss sources"
+  on rss_sources for all using (auth.role() = 'service_role');
+
+-- Seed starter sources — public, legal RSS feeds
+insert into rss_sources (name, feed_url, region) values
+  ('nyaa-anime', 'https://nyaa.si/?page=rss&c=1_2&f=0', 'anime'),
+  ('subsplease-anime', 'https://subsplease.org/rss/?r=1080', 'anime')
+on conflict (name) do nothing;
+
+-- ─── SCRAPE TARGETS ──────────────────────────────────────────────────────────
+-- Configurable list of sites the scraper visits.
+-- CSS selectors are filled in per-site as you confirm them.
+-- is_active stays false until selectors are verified — prevents
+-- the cron job from running against unconfigured sites.
+
+create table scrape_targets (
+  id              uuid primary key default uuid_generate_v4(),
+  provider_name   text not null unique,
+  base_url        text not null,
+  region          region_type not null,
+  list_selector   text,                     -- CSS selector for movie card links on listing page
+  title_selector  text,                     -- CSS selector for title on detail page
+  link_selector   text,                     -- CSS selector for download/stream links
+  is_active       boolean not null default false,
+  created_at      timestamptz not null default now()
 );
 
--- Atomic click counter
-CREATE OR REPLACE FUNCTION increment_click_count(link_id UUID)
-RETURNS void AS $$
-  UPDATE external_links SET click_count = click_count + 1 WHERE id = link_id;
-$$ LANGUAGE sql;
+alter table scrape_targets enable row level security;
+create policy "Service role can manage scrape targets"
+  on scrape_targets for all using (auth.role() = 'service_role');
+
+-- Seed placeholder targets — inactive until selectors verified
+insert into scrape_targets (provider_name, base_url, region, is_active) values
+  ('fzmovies', 'https://fzmovies.net', 'hollywood', false),
+  ('netnaija', 'https://netnaija.com', 'nollywood', false)
+on conflict (provider_name) do nothing;
