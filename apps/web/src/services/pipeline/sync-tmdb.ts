@@ -19,8 +19,10 @@ import {
   normaliseTmdbMovie,
   getTmdbMovie,
   getTmdbSeries,
+  getTmdbVideos,
+  pickBestTrailer,
 } from '../tmdb.service'
-import { upsertMovie } from '@flixaura/db'
+import { upsertMovie, upsertYoutubeEmbed } from '@flixaura/db'
 import type { RunCounters } from './log'
 
 const SYNC_PAGES_PER_SOURCE = 2 // ~40 titles per source per run — keeps within rate limits
@@ -115,7 +117,22 @@ async function syncFromPages(
           .eq('tmdb_id', normalised.tmdb_id)
           .single()
 
-        await upsertMovie(client, normalised)
+        const movie = await upsertMovie(client, normalised)
+
+        // Best-effort — a missing/failed trailer fetch shouldn't fail the sync.
+        await getTmdbVideos(item.id, isTV)
+          .then((videos) => {
+            const trailer = pickBestTrailer(videos.results)
+            if (!trailer) return
+            return upsertYoutubeEmbed(client, {
+              movie_id: movie.id,
+              youtube_video_id: trailer.key,
+              is_official_trailer: true,
+              is_full_content: false,
+              title: trailer.name,
+            })
+          })
+          .catch((err) => console.error(`Trailer fetch failed for TMDB item ${item.id}:`, err))
 
         if (existing.data) {
           counters.items_updated++

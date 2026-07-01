@@ -217,6 +217,7 @@ export async function upsertYoutubeEmbed(
     is_full_content?: boolean
     is_recap?: boolean
     language?: string
+    title?: string | null
   }
 ): Promise<void> {
   const { error } = await client

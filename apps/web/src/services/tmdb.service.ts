@@ -147,6 +147,43 @@ export async function getTmdbSeries(tmdbId: number): Promise<TmdbMovie> {
   return tmdbFetch<TmdbMovie>(`/tv/${tmdbId}`)
 }
 
+// ─── Trailers ─────────────────────────────────────────────────────────────────
+
+export interface TmdbVideo {
+  id: string
+  key: string             // YouTube video ID when site === 'YouTube'
+  name: string
+  site: string             // 'YouTube' | 'Vimeo' | ...
+  type: string              // 'Trailer' | 'Teaser' | 'Clip' | ...
+  official: boolean        // TMDB-curated flag — true for studio-released trailers
+  published_at: string
+}
+
+/**
+ * Get all videos (trailers, teasers, clips) for a movie or TV series.
+ */
+export async function getTmdbVideos(tmdbId: number, isTV: boolean): Promise<{ results: TmdbVideo[] }> {
+  return tmdbFetch<{ results: TmdbVideo[] }>(`/${isTV ? 'tv' : 'movie'}/${tmdbId}/videos`)
+}
+
+/**
+ * Pick the best official trailer from a TMDB videos response.
+ * Prefers TMDB's own `official` flag over any particular uploader/channel —
+ * that flag is what TMDB itself vets, regardless of which YouTube channel
+ * (KinoCheck, a studio's own channel, etc.) the trailer happens to be hosted on.
+ */
+export function pickBestTrailer(videos: TmdbVideo[]): TmdbVideo | null {
+  const trailers = videos.filter((v) => v.site === 'YouTube' && v.type === 'Trailer')
+  if (trailers.length === 0) return null
+
+  const sorted = [...trailers].sort((a, b) => {
+    if (a.official !== b.official) return a.official ? -1 : 1
+    return new Date(b.published_at).getTime() - new Date(a.published_at).getTime()
+  })
+
+  return sorted[0] ?? null
+}
+
 /**
  * Get the current trending movies and shows (day or week window).
  */
