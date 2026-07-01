@@ -5,10 +5,11 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 import * as fs from 'fs';
 import { searchVideos } from './client';
 
-const QUERIES = [
-  'Nollywood full movie 2024',
-  'Yoruba movie full',
-  'Royal Arts Academy full movie',
+const QUERIES: { query: string; region: string; contentType: string }[] = [
+  { query: 'Nollywood full movie 2024', region: 'nollywood', contentType: 'movie' },
+  { query: 'Yoruba movie full', region: 'nollywood', contentType: 'movie' },
+  { query: 'Royal Arts Academy full movie', region: 'nollywood', contentType: 'movie' },
+  { query: 'Dharmann short film', region: 'hollywood', contentType: 'movie' },
 ];
 
 const OUTPUT_PATH = path.resolve(__dirname, 'data/candidates.json');
@@ -21,13 +22,13 @@ async function runSearch() {
     : [];
   const byVideoId = new Map(existing.map((c) => [c.videoId, c]));
 
-  for (const query of QUERIES) {
+  for (const { query, region, contentType } of QUERIES) {
     console.log(`Searching: ${query}`);
     const results = await searchVideos(query, 10);
 
     for (const r of results as any[]) {
       if (byVideoId.has(r.videoId)) continue; // don't clobber existing review decisions
-      byVideoId.set(r.videoId, { ...r, query, region: 'nollywood', contentType: 'movie', approved: false });
+      byVideoId.set(r.videoId, { ...r, query, region, contentType, approved: false });
     }
   }
 
