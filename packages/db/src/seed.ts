@@ -44,7 +44,7 @@ const SAMPLE_MOVIES = [
     runtime_minutes: 120,
     language: 'yo',
     rating: 9.1,
-    synopsis: 'A village sculptor discovers an ancient secret buried beneath the community's history.',
+    synopsis: "A village sculptor discovers an ancient secret buried beneath the community's history.",
     has_subtitle_en: true,
     has_subtitle_yo: true,
   },
