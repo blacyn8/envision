@@ -19,15 +19,13 @@ export function MovieCard({ movie }: MovieCardProps) {
       className="title-card flex w-[140px] flex-shrink-0 flex-col gap-2 sm:w-[180px]"
     >
       <div className="group relative aspect-[2/3] overflow-hidden rounded-xl border border-fa-line bg-fa-surface transition-all duration-300 hover:-translate-y-1 hover:border-fa-accent/40 hover:shadow-[0_12px_32px_rgba(79,209,255,0.18)]">
-        {movie.poster_url && (
-          <Image
-            src={movie.poster_url}
-            alt={movie.title}
-            fill
-            sizes="(max-width: 640px) 140px, 180px"
-            className="object-cover transition-transform duration-400 group-hover:scale-105"
-          />
-        )}
+        <Image
+          src={movie.poster_url ?? '/placeholder-poster.svg'}
+          alt={movie.title}
+          fill
+          sizes="(max-width: 640px) 140px, 180px"
+          className="object-cover transition-transform duration-400 group-hover:scale-105"
+        />
 
         {/* Rating badge */}
         {movie.rating != null && (

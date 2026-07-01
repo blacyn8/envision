@@ -13,7 +13,7 @@ interface HeroSectionProps {
  * with a dark scrim gradient for text legibility.
  */
 export function HeroSection({ movie }: HeroSectionProps) {
-  const backdrop = movie.backdrop_url ?? movie.poster_url ?? ''
+  const backdrop = movie.backdrop_url ?? movie.poster_url ?? '/placeholder-poster.svg'
 
   return (
     <section

@@ -104,14 +104,12 @@ export default async function ProfilePage() {
                   className="group"
                 >
                   <div className="aspect-[2/3] overflow-hidden rounded-lg border border-fa-line bg-fa-surface transition-all group-hover:border-fa-accent/40">
-                    {movie.poster_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={movie.poster_url}
-                        alt={movie.title}
-                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={movie.poster_url ?? '/placeholder-poster.svg'}
+                      alt={movie.title}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
                   </div>
                   <p className="mt-1.5 truncate text-xs font-semibold">{movie.title}</p>
                 </Link>

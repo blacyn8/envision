@@ -11,6 +11,7 @@ interface Candidate {
   title: string;
   channel: string;
   description: string;
+  thumbnail?: string;
   region: string;
   contentType: string;
   kind?: 'full_movie' | 'recap';
@@ -55,6 +56,7 @@ async function approveAndImport() {
           content_type: c.contentType,
           region: c.region,
           year: extractYear(title),
+          poster_url: c.thumbnail ?? null,
         },
         { onConflict: 'slug' }
       )

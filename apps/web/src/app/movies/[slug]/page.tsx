@@ -79,14 +79,12 @@ export default async function MoviePage({ params }: MoviePageProps) {
           {/* LEFT — poster + quick stats */}
           <aside className="flex flex-col gap-5">
             <div className="relative aspect-[2/3] overflow-hidden rounded-xl border border-fa-line bg-fa-surface">
-              {movie.poster_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={movie.poster_url}
-                  alt={movie.title}
-                  className="h-full w-full object-cover"
-                />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={movie.poster_url ?? '/placeholder-poster.svg'}
+                alt={movie.title}
+                className="h-full w-full object-cover"
+              />
             </div>
 
             {/* Quick stats */}

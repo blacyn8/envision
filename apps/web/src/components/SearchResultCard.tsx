@@ -30,15 +30,13 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
     <article className="flex flex-col gap-5 rounded-lg border border-fa-line bg-fa-surface p-4 sm:flex-row sm:p-5">
       {/* Poster */}
       <div className="relative aspect-[2/3] w-full flex-shrink-0 overflow-hidden rounded-xl bg-fa-bg-soft sm:w-[140px]">
-        {movie.poster_url && (
-          <Image
-            src={movie.poster_url}
-            alt={movie.title}
-            fill
-            sizes="140px"
-            className="object-cover"
-          />
-        )}
+        <Image
+          src={movie.poster_url ?? '/placeholder-poster.svg'}
+          alt={movie.title}
+          fill
+          sizes="140px"
+          className="object-cover"
+        />
       </div>
 
       {/* Info + actions */}
