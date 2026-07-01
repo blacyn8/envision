@@ -215,6 +215,7 @@ export async function upsertYoutubeEmbed(
     youtube_video_id: string
     is_official_trailer?: boolean
     is_full_content?: boolean
+    is_recap?: boolean
     language?: string
   }
 ): Promise<void> {
@@ -224,6 +225,7 @@ export async function upsertYoutubeEmbed(
       {
         is_official_trailer: true,
         is_full_content: false,
+        is_recap: false,
         language: 'en',
         ...embed,
       },

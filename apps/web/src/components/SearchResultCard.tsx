@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Film, Subtitles, Clock } from 'lucide-react'
+import { Play, Film, ListVideo, Subtitles, Clock } from 'lucide-react'
 import type { Movie, YoutubeEmbed } from '@flixaura/shared'
 import { formatRating, formatRuntime, getRegionLabel } from '@flixaura/shared'
 
@@ -8,6 +8,7 @@ export interface SearchResult {
   movie: Movie
   trailer: YoutubeEmbed | null
   fullMovie: YoutubeEmbed | null
+  recap: YoutubeEmbed | null
 }
 
 interface SearchResultCardProps {
@@ -23,7 +24,7 @@ interface SearchResultCardProps {
  * "not available yet" state rather than any third-party link.
  */
 export function SearchResultCard({ result }: SearchResultCardProps) {
-  const { movie, trailer, fullMovie } = result
+  const { movie, trailer, fullMovie, recap } = result
 
   return (
     <article className="flex flex-col gap-5 rounded-lg border border-fa-line bg-fa-surface p-4 sm:flex-row sm:p-5">
@@ -102,7 +103,7 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
           </a>
         )}
 
-        {fullMovie ? (
+        {fullMovie && (
           <Link
             href={`/movies/${movie.slug}`}
             className="inline-flex w-fit items-center gap-2 rounded-full bg-fa-accent px-4 py-2 text-sm font-bold text-fa-bg shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-glow-lg"
@@ -110,7 +111,19 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
             <Film size={16} />
             Watch full movie
           </Link>
-        ) : (
+        )}
+
+        {!fullMovie && recap && (
+          <Link
+            href={`/movies/${movie.slug}`}
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-fa-line bg-fa-bg-soft px-4 py-2 text-sm font-semibold text-fa-text-dim transition-colors hover:border-fa-accent hover:text-fa-accent"
+          >
+            <ListVideo size={16} />
+            Watch recap (not the full movie)
+          </Link>
+        )}
+
+        {!fullMovie && !recap && (
           <div className="rounded-lg border border-dashed border-fa-line bg-fa-bg-soft px-4 py-3 text-sm text-fa-text-dim">
             {trailer
               ? 'Full movie not available yet — trailer available above.'

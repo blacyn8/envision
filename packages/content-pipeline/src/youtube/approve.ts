@@ -13,6 +13,7 @@ interface Candidate {
   description: string;
   region: string;
   contentType: string;
+  kind?: 'full_movie' | 'recap';
   approved: boolean;
 }
 
@@ -66,12 +67,18 @@ async function approveAndImport() {
     }
 
     if (movie) {
+      // Candidates from before the `kind` field existed are all full movies
+      // (the recap categories were added afterward).
+      const isRecap = c.kind === 'recap';
+
       await upsertYoutubeEmbed(supabase, {
         movie_id: movie.id,
         youtube_video_id: c.videoId,
-        is_full_content: true,
+        is_official_trailer: false,
+        is_full_content: !isRecap,
+        is_recap: isRecap,
       });
-      console.log(`Imported: ${title}`);
+      console.log(`Imported (${isRecap ? 'recap' : 'full movie'}): ${title}`);
     }
   }
 }

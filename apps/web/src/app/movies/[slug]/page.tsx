@@ -40,6 +40,7 @@ export default async function MoviePage({ params }: MoviePageProps) {
 
   const trailer = embeds.find((e) => e.is_official_trailer) ?? null
   const fullMovie = embeds.find((e) => e.is_full_content) ?? null
+  const recap = embeds.find((e) => e.is_recap) ?? null
 
   return (
     <>
@@ -172,8 +173,9 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </section>
             )}
 
-            {/* Full movie — only rendered once an official upload is approved */}
-            <WatchSection movieTitle={movie.title} fullMovie={fullMovie} />
+            {/* Full movie — only rendered once an official upload is approved.
+                Falls back to a clearly labeled recap when that's all we have. */}
+            <WatchSection movieTitle={movie.title} fullMovie={fullMovie} recap={recap} />
           </div>
         </div>
       </main>

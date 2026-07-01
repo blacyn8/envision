@@ -97,6 +97,7 @@ create table youtube_embeds (
   youtube_video_id     text not null,
   is_official_trailer  boolean not null default true,
   is_full_content      boolean not null default false,
+  is_recap             boolean not null default false, -- third-party recap/summary, not the film itself
   language             text not null default 'en',
   title                text,
   created_at           timestamptz not null default now(),

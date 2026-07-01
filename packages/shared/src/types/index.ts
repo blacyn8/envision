@@ -72,6 +72,7 @@ export const YoutubeEmbedSchema = z.object({
   youtube_video_id: z.string(),
   is_official_trailer: z.boolean().default(true),
   is_full_content: z.boolean().default(false),
+  is_recap: z.boolean().default(false),
   language: z.string().default('en'),
   title: z.string().nullable(),
   created_at: z.string().datetime(),

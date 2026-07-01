@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         movie,
         trailer: embeds.find((e) => e.is_official_trailer) ?? null,
         fullMovie: embeds.find((e) => e.is_full_content) ?? null,
+        recap: embeds.find((e) => e.is_recap) ?? null,
       }
     })
   )
