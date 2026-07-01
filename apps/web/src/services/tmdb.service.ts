@@ -161,9 +161,22 @@ export interface TmdbVideo {
 
 /**
  * Get all videos (trailers, teasers, clips) for a movie or TV series.
+ *
+ * TMDB's /videos endpoint filters results by language, and tmdbFetch always
+ * sends language=en-US — without widening it, non-English trailers (Hindi,
+ * Yoruba, Korean, etc.) come back as an empty result even when TMDB has
+ * them. `null` matches videos with no language tag at all (common case).
  */
-export async function getTmdbVideos(tmdbId: number, isTV: boolean): Promise<{ results: TmdbVideo[] }> {
-  return tmdbFetch<{ results: TmdbVideo[] }>(`/${isTV ? 'tv' : 'movie'}/${tmdbId}/videos`)
+export async function getTmdbVideos(
+  tmdbId: number,
+  isTV: boolean,
+  originalLanguage?: string
+): Promise<{ results: TmdbVideo[] }> {
+  const languages = ['en', 'null', ...(originalLanguage && originalLanguage !== 'en' ? [originalLanguage] : [])]
+
+  return tmdbFetch<{ results: TmdbVideo[] }>(`/${isTV ? 'tv' : 'movie'}/${tmdbId}/videos`, {
+    include_video_language: languages.join(','),
+  })
 }
 
 /**

@@ -120,7 +120,7 @@ async function syncFromPages(
         const movie = await upsertMovie(client, normalised)
 
         // Best-effort — a missing/failed trailer fetch shouldn't fail the sync.
-        await getTmdbVideos(item.id, isTV)
+        await getTmdbVideos(item.id, isTV, normalised.language)
           .then((videos) => {
             const trailer = pickBestTrailer(videos.results)
             if (!trailer) return
