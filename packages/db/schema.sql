@@ -87,6 +87,28 @@ create table download_links (
 create index idx_download_links_movie_id on download_links (movie_id);
 create index idx_download_links_quality  on download_links (quality);
 
+-- ─── YOUTUBE EMBEDS ──────────────────────────────────────────────────────────
+-- Official trailers, and (once human-approved via the content pipeline)
+-- full movies that rightsholders have themselves uploaded to YouTube.
+
+create table youtube_embeds (
+  id                   uuid primary key default uuid_generate_v4(),
+  movie_id             uuid not null references movies(id) on delete cascade,
+  youtube_video_id     text not null,
+  is_official_trailer  boolean not null default true,
+  is_full_content      boolean not null default false,
+  language             text not null default 'en',
+  title                text,
+  created_at           timestamptz not null default now(),
+  unique(movie_id, youtube_video_id)
+);
+
+create index idx_youtube_embeds_movie_id on youtube_embeds (movie_id);
+
+alter table youtube_embeds enable row level security;
+create policy "Youtube embeds are publicly readable"
+  on youtube_embeds for select using (true);
+
 -- ─── USERS (extends Supabase auth.users) ─────────────────────────────────────
 
 create table public.profiles (

@@ -1,14 +1,13 @@
-'use client'
-
+import Link from 'next/link'
 import Image from 'next/image'
-import { Play, Download, Subtitles, Clock } from 'lucide-react'
-import type { Movie, ExternalLink, YoutubeEmbed } from '@flixaura/shared'
+import { Play, Film, Subtitles, Clock } from 'lucide-react'
+import type { Movie, YoutubeEmbed } from '@flixaura/shared'
 import { formatRating, formatRuntime, getRegionLabel } from '@flixaura/shared'
 
 export interface SearchResult {
   movie: Movie
-  links: { stream: ExternalLink[]; download: ExternalLink[] }
   trailer: YoutubeEmbed | null
+  fullMovie: YoutubeEmbed | null
 }
 
 interface SearchResultCardProps {
@@ -18,26 +17,13 @@ interface SearchResultCardProps {
 /**
  * SearchResultCard — the core "Search & Get" result.
  *
- * Layout mirrors the search-first pattern: poster + info on one side,
- * trailer/quality options on the other. Always shows a YouTube
- * trailer if one exists. Download/stream links show as buttons
- * grouped by quality; if none exist yet, shows a "coming soon" state
- * rather than a broken/empty section — this keeps the page honest
- * about what's actually available while the Stage 2 scraper fills in
- * more links over time.
+ * Always shows a YouTube trailer link if one exists. Links through to the
+ * movie page to watch the full movie when an official upload has been
+ * approved via the content pipeline; otherwise shows an honest
+ * "not available yet" state rather than any third-party link.
  */
 export function SearchResultCard({ result }: SearchResultCardProps) {
-  const { movie, links, trailer } = result
-  const hasLinks = links.stream.length > 0 || links.download.length > 0
-
-  async function trackClick(linkId: string) {
-    // Fire-and-forget — never block navigation on this
-    fetch('/api/links/click', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ linkId }),
-    }).catch(() => {})
-  }
+  const { movie, trailer, fullMovie } = result
 
   return (
     <article className="flex flex-col gap-5 rounded-lg border border-fa-line bg-fa-surface p-4 sm:flex-row sm:p-5">
@@ -116,57 +102,22 @@ export function SearchResultCard({ result }: SearchResultCardProps) {
           </a>
         )}
 
-        {/* Download / stream links — grouped by quality */}
-        {hasLinks ? (
-          <div className="flex flex-col gap-2">
-            {links.stream.length > 0 && (
-              <LinkGroup label="Stream" icon={<Play size={14} />} links={links.stream} onClick={trackClick} />
-            )}
-            {links.download.length > 0 && (
-              <LinkGroup label="Download" icon={<Download size={14} />} links={links.download} onClick={trackClick} />
-            )}
-          </div>
+        {fullMovie ? (
+          <Link
+            href={`/movies/${movie.slug}`}
+            className="inline-flex w-fit items-center gap-2 rounded-full bg-fa-accent px-4 py-2 text-sm font-bold text-fa-bg shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-glow-lg"
+          >
+            <Film size={16} />
+            Watch full movie
+          </Link>
         ) : (
           <div className="rounded-lg border border-dashed border-fa-line bg-fa-bg-soft px-4 py-3 text-sm text-fa-text-dim">
             {trailer
-              ? 'Download links coming soon — trailer available above.'
-              : 'Links coming soon. Check back shortly.'}
+              ? 'Full movie not available yet — trailer available above.'
+              : 'Not available yet. Check back shortly.'}
           </div>
         )}
       </div>
     </article>
-  )
-}
-
-// ─── Link group — one row of quality-tagged buttons ───────────────────────────
-
-function LinkGroup({
-  label,
-  icon,
-  links,
-  onClick,
-}: {
-  label: string
-  icon: React.ReactNode
-  links: ExternalLink[]
-  onClick: (linkId: string) => void
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-semibold uppercase tracking-wide text-fa-text-dim">{label}:</span>
-      {links.map((link) => (
-        <a
-          key={link.id}
-          href={link.url}
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          onClick={() => onClick(link.id)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-fa-accent px-3.5 py-1.5 text-xs font-bold text-fa-bg shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-glow-lg"
-        >
-          {icon}
-          {link.quality ?? 'SD'}
-        </a>
-      ))}
-    </div>
   )
 }

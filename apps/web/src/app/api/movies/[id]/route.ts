@@ -1,17 +1,13 @@
 /**
  * GET /api/movies/[id]
- * Returns a single movie's full data including external links and YouTube embeds.
+ * Returns a single movie's full data including its YouTube embeds.
  * Used by the mobile app and any client that needs JSON.
  * The web app uses server components directly — this route is for API consumers.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase.server'
-import {
-  getMovieBySlug,
-  getExternalLinksForMovie,
-  getYoutubeEmbedsForMovie,
-} from '@flixaura/db'
+import { getMovieBySlug, getYoutubeEmbedsForMovie } from '@flixaura/db'
 
 export async function GET(
   _req: NextRequest,
@@ -25,19 +21,9 @@ export async function GET(
       return NextResponse.json({ error: 'Movie not found' }, { status: 404 })
     }
 
-    const [allLinks, embeds] = await Promise.all([
-      getExternalLinksForMovie(supabaseAdmin, movie.id),
-      getYoutubeEmbedsForMovie(supabaseAdmin, movie.id),
-    ])
+    const embeds = await getYoutubeEmbedsForMovie(supabaseAdmin, movie.id)
 
-    return NextResponse.json({
-      movie,
-      links: {
-        stream: allLinks.filter((l) => l.link_type === 'stream'),
-        download: allLinks.filter((l) => l.link_type === 'download'),
-      },
-      embeds,
-    })
+    return NextResponse.json({ movie, embeds })
   } catch (err) {
     console.error('[GET /api/movies/[id]]', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

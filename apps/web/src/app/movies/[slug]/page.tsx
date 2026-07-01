@@ -2,14 +2,10 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
-import { DownloadSection } from '@/components/DownloadSection'
+import { WatchSection } from '@/components/WatchSection'
 import { WatchlistButton } from '@/components/WatchlistButton'
 import { supabaseAdmin } from '@/lib/supabase.server'
-import {
-  getMovieBySlug,
-  getExternalLinksForMovie,
-  getYoutubeEmbedsForMovie,
-} from '@flixaura/db'
+import { getMovieBySlug, getYoutubeEmbedsForMovie } from '@flixaura/db'
 import { formatRating, formatRuntime, getRegionLabel, getRegionFlag } from '@flixaura/shared'
 
 // Pre-render at build time then update in background — good for SEO
@@ -26,7 +22,7 @@ export async function generateMetadata({ params }: MoviePageProps): Promise<Meta
 
   return {
     title: `${movie.title} (${movie.year}) — FlixAura`,
-    description: movie.synopsis ?? `Watch or download ${movie.title} on FlixAura.`,
+    description: movie.synopsis ?? `Watch ${movie.title} on FlixAura.`,
     openGraph: {
       title: movie.title,
       description: movie.synopsis ?? '',
@@ -40,14 +36,10 @@ export default async function MoviePage({ params }: MoviePageProps) {
   const movie = await getMovieBySlug(supabaseAdmin, params.slug)
   if (!movie) notFound()
 
-  const [allLinks, embeds] = await Promise.all([
-    getExternalLinksForMovie(supabaseAdmin, movie.id),
-    getYoutubeEmbedsForMovie(supabaseAdmin, movie.id),
-  ])
+  const embeds = await getYoutubeEmbedsForMovie(supabaseAdmin, movie.id)
 
-  const streamLinks = allLinks.filter((l) => l.link_type === 'stream')
-  const downloadLinks = allLinks.filter((l) => l.link_type === 'download')
   const trailer = embeds.find((e) => e.is_official_trailer) ?? null
+  const fullMovie = embeds.find((e) => e.is_full_content) ?? null
 
   return (
     <>
@@ -180,12 +172,8 @@ export default async function MoviePage({ params }: MoviePageProps) {
               </section>
             )}
 
-            {/* Download and stream links — the core Nkiri-style section */}
-            <DownloadSection
-              movieId={movie.id}
-              streamLinks={streamLinks}
-              downloadLinks={downloadLinks}
-            />
+            {/* Full movie — only rendered once an official upload is approved */}
+            <WatchSection movieTitle={movie.title} fullMovie={fullMovie} />
           </div>
         </div>
       </main>

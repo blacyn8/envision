@@ -3,7 +3,7 @@ import { Footer } from '@/components/Footer'
 import { WatchSearchBox } from '@/components/WatchSearchBox'
 import { SearchResultCard, type SearchResult } from '@/components/SearchResultCard'
 import { supabaseAdmin } from '@/lib/supabase.server'
-import { searchMovies, getExternalLinksForMovie, getYoutubeEmbedsForMovie } from '@flixaura/db'
+import { searchMovies, getYoutubeEmbedsForMovie } from '@flixaura/db'
 
 interface WatchPageProps {
   searchParams: { q?: string }
@@ -26,7 +26,7 @@ export default async function WatchPage({ searchParams }: WatchPageProps) {
             Search &amp; <span className="gradient-text">Get</span>
           </h1>
           <p className="mt-2 text-sm text-fa-text-dim">
-            Find a movie, series, or anime title — watch the trailer, then stream or download.
+            Find a movie, series, or anime title and watch it right here.
           </p>
         </div>
 
@@ -64,18 +64,12 @@ async function getSearchResults(query: string): Promise<SearchResult[]> {
 
   return Promise.all(
     movies.map(async (movie) => {
-      const [allLinks, embeds] = await Promise.all([
-        getExternalLinksForMovie(supabaseAdmin, movie.id),
-        getYoutubeEmbedsForMovie(supabaseAdmin, movie.id),
-      ])
+      const embeds = await getYoutubeEmbedsForMovie(supabaseAdmin, movie.id)
 
       return {
         movie,
-        links: {
-          stream: allLinks.filter((l) => l.link_type === 'stream'),
-          download: allLinks.filter((l) => l.link_type === 'download'),
-        },
         trailer: embeds.find((e) => e.is_official_trailer) ?? null,
+        fullMovie: embeds.find((e) => e.is_full_content) ?? null,
       }
     })
   )
